@@ -1,0 +1,43 @@
+---
+- hosts: omchost
+  gather_facts: false
+  vars_files:
+   - omcvar.yaml
+  tasks:
+   - name: create cloudagent directory if not present
+     file:
+        path: "{{ cloudagentdir }}"
+        state: directory
+        mode: 0755 
+   - name: unzip cloudagent binary
+     unarchive:
+       src: /home/karthi/ansible/learning/cloudagent_linux.x64.zip
+       dest: "{{ cloudagentdir }}"
+       creates: "{{ cloudagentdir }}/agent.rsp"
+   - name: OMC pre-requisites check.
+     shell: ./AgentInstall.sh AGENT_BASE_DIRECTORY="{{ cloudagentdir }}/cloudagent" TENANT_ID={{ tenantid }} AGENT_REGISTRATION_KEY={{ registrationkey }} UPLOAD_ROOT={{ uploadroot }} AGENT_PORT={{ agentport }} EXECUTE_PREREQ=true
+     args:
+        chdir: "{{ cloudagentdir }}"
+     register: output
+     tags:
+       - omcpreinstall
+   - name: OMC installation will start if the pre-requisites check completed  and it will create a omcinstalllog.txt. 
+     shell: ./AgentInstall.sh AGENT_BASE_DIRECTORY="{{ cloudagentdir }}/cloudagent" TENANT_ID={{ tenantid }} AGENT_REGISTRATION_KEY={{ registrationkey }} UPLOAD_ROOT={{ uploadroot }} AGENT_PORT={{ agentport }}  >> somelog.txt
+     args:
+        chdir: "{{ cloudagentdir }}"
+        creates: omcinstalllog.txt
+     when: output.rc == 0
+     register: result
+     tags:
+       - omcinstall
+   - name: remove somelog if OMC install fails
+     file:
+       path: "{{ cloudagentdir }}/omcinstalllog.txt"
+       state: absent
+     when: result.rc != 0
+   - name: OMC installation Status
+     shell: ./omcli status agent
+     args:
+       chdir: "{{ cloudagentdir }}/cloudagent/agent_inst/bin"
+     when: result.rc == 0
+     ignore_errors: yes
