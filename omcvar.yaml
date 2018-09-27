@@ -1,5 +1,5 @@
 tenantid: bc4b5415c3994d859d14e864778fada9
-uploadroot: https://SCCOMC-sccomc.aucom-east-1.oraclecloud.com/
-registrationkey: RyfTeJUupvMbXGYz9VnJh9KJZz
+uploadroot: <mention upload root here>
+registrationkey: <mention registration key here>
 agentport: 4464
 cloudagentdir: /home/oracle/learning
